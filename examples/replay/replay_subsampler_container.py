@@ -23,6 +23,7 @@ ds = ds.chunk({"time":1,
 
 dds = xr.Dataset()
 for key, da in ds.data_vars.items():
+    print(key)
 
     dda = xr.DataArray(
         data=darray.zeros(
