@@ -44,33 +44,31 @@ if __name__ == "__main__":
 
     #### STORE CONTAINER
     ds = xr.open_zarr("gcs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree/03h-freq/zarr/fv3.zarr",
-                    storage_options={"token": "anon"},)
+                      storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"},
+                      )
     # clip to a few variables to test
     ds = ds[['acond','tmp']]
-    # upsample
-    ds = ds.isel(time=slice(1,30), 
-                grid_xt=slice(None, None, 4), 
-                grid_yt=slice(None, None, 4))
+    # resample
+    ds = ds.isel(
+        grid_xt=slice(None, None, 4), 
+        grid_yt=slice(None, None, 4)
+        )
     # update chunks to match 1-deg ds (dont need pfull to be 1)
     ds = ds.chunk({"time":1, 
-                "pfull":127, 
-                "grid_yt":-1, 
-                "grid_xt":-1})
+                   "pfull":127, 
+                   "grid_yt":-1, 
+                   "grid_xt":-1}
+                   )
 
     dds = xr.Dataset()
     for key, da in ds.data_vars.items():
-
-        # set shape and chunks
-        shape = da.shape
-        dtype = da.dtype
-        chunks = da.chunks
         
-        # loop through vars and append
+        # loop through vars
         dda = xr.DataArray(
             data=darray.zeros(
-                shape=shape,
-                chunks=chunks,
-                dtype=dtype,
+                shape=da.shape,
+                chunks=da.chunks,
+                dtype=da.dtype,
             ),
             dims=da.dims,
             coords=da.coords,
