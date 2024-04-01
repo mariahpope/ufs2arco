@@ -20,6 +20,8 @@ ds = ds.chunk({"time":1,
                "pfull":127, 
                "grid_yt":-1, 
                "grid_xt":-1})
+ds['cftime'] = ds['cftime'].chunk(21755)
+ds['ftime'] = ds['cftime'].chunk(21755)
 
 dds = xr.Dataset()
 for key, da in ds.data_vars.items():
