@@ -10,5 +10,5 @@
 #SBATCH --cpus-per-task=30
 
 source /contrib/Mariah.Pope/miniconda3/etc/profile.d/conda.sh
-conda activate base
+conda activate ufs2arco
 python subsampler.py $1 $2

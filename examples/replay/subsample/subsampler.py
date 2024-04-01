@@ -2,17 +2,14 @@ import xarray as xr
 import numpy as np
 import sys
 
-start_timestep = int(sys.argv[1])
-end_timestep = int(sys.argv[2])
+path_out = "gcs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree-subsampled/03h-freq/zarr/"
 
 ds = xr.open_zarr("gcs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree/03h-freq/zarr/fv3.zarr",
-                storage_options={"token": "anon"},)
+                storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"},)
 
-# upsample and clip to timesteps that this job will do
 ds = ds.isel(grid_xt=slice(None, None, 4), 
              grid_yt=slice(None, None, 4))
 
-# update chunks to match 1-deg ds (dont need pfull to be 1)
 ds = ds.chunk({"time":1, 
                "pfull":127, 
                "grid_yt":-1, 
@@ -20,7 +17,15 @@ ds = ds.chunk({"time":1,
 ds['cftime'] = ds['cftime'].chunk(21755)
 ds['ftime'] = ds['cftime'].chunk(21755)
 
-splits = [int(x) for x in np.linspace(start_timestep, end_timestep, 5)]
+start_timestep = int(sys.argv[1])
+end_timestep = int(sys.argv[2]) + 1
+timestep_total = end_timestep - start_timestep
+timestep_per_loop = 250
+groups = int(timestep_total/timestep_per_loop)
+splits = [int(x) for x in np.linspace(start_timestep, end_timestep, groups)]
+# choosing 250 timesteps per bunch, which should be about 163GB of memory.
+# giving a pretty big buffer so that we don't run into issues
+# 1 timestep in this set ends up being about 0.65GB
 
 for i in range(len(splits) - 1):
 
@@ -37,6 +42,6 @@ for i in range(len(splits) - 1):
     }
     region = {k : v for k,v in region.items() if k in ds.dims}
     
-    ds_subset.to_zarr('/Users/mariahpope/Desktop/zarr_testing/v2',
-                    region=region
-                    )
+    ds_subset.to_zarr(path_out, 
+                      region=region,
+                      storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"})
