@@ -38,7 +38,12 @@ for key, da in ds.data_vars.items():
         attrs=da.attrs,
     )
     dds[key] = dda
-    
+
+# make sure time is not weird
+dds['time'] = ds['time']
+dds['cftime'] = ds['cftime']
+dds['ftime'] = ds['ftime']
+
 # store out container
 dds.to_zarr(path_out, 
             compute=False,
