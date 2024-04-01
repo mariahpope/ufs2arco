@@ -20,8 +20,9 @@ ds = ds.chunk({"time":1,
                "pfull":127, 
                "grid_yt":-1, 
                "grid_xt":-1})
-ds['cftime'] = ds['cftime'].chunk(21755)
-ds['ftime'] = ds['ftime'].chunk(21755)
+ds = ds.drop(['cftime','ftime'])
+#ds['cftime'] = ds['cftime'].chunk(21755)
+#ds['ftime'] = ds['ftime'].chunk(21755)
 
 dds = xr.Dataset()
 for key, da in ds.data_vars.items():
@@ -40,9 +41,9 @@ for key, da in ds.data_vars.items():
     dds[key] = dda
 
 # make sure time is not weird
-dds['time'] = ds['time']
-dds['cftime'] = ds['cftime']
-dds['ftime'] = ds['ftime']
+#dds['time'] = ds['time']
+#dds['cftime'] = ds['cftime']
+#dds['ftime'] = ds['ftime']
 
 # store out container
 dds.to_zarr(path_out, 

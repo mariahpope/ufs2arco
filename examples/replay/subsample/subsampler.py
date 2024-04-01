@@ -5,8 +5,7 @@ import sys
 path_out = "gcs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree-subsampled/03h-freq/zarr/"
 
 ds = xr.open_zarr("gcs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree/03h-freq/zarr/fv3.zarr",
-                storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"},
-                decode_times=False)
+                storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"},)
 
 ds = ds.isel(grid_xt=slice(None, None, 4), 
              grid_yt=slice(None, None, 4))
