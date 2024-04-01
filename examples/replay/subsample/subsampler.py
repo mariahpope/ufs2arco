@@ -22,7 +22,7 @@ end_timestep = int(sys.argv[2]) + 1
 timestep_total = end_timestep - start_timestep
 timestep_per_loop = 250
 groups = int(timestep_total/timestep_per_loop)
-splits = [int(x) for x in np.linspace(start_timestep, end_timestep, groups)]
+splits = [int(x) for x in np.linspace(start_timestep, end_timestep, groups+1)]
 # choosing 250 timesteps per bunch, which should be about 163GB of memory.
 # giving a pretty big buffer so that we don't run into issues
 # 1 timestep in this set ends up being about 0.65GB
