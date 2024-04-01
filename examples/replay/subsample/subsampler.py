@@ -20,12 +20,10 @@ ds['ftime'] = ds['cftime'].chunk(21755)
 start_timestep = int(sys.argv[1])
 end_timestep = int(sys.argv[2]) + 1
 timestep_total = end_timestep - start_timestep
-timestep_per_loop = 250
+timestep_per_loop = 100
 groups = int(timestep_total/timestep_per_loop)
 splits = [int(x) for x in np.linspace(start_timestep, end_timestep, groups+1)]
-# choosing 250 timesteps per bunch, which should be about 163GB of memory.
-# giving a pretty big buffer so that we don't run into issues
-# 1 timestep in this set ends up being about 0.65GB
+# 1 timestep in this dataset ends up being about 0.65GB
 
 for i in range(len(splits) - 1):
 
@@ -45,3 +43,4 @@ for i in range(len(splits) - 1):
     ds_subset.to_zarr(path_out, 
                       region=region,
                       storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"})
+    del ds_subset
