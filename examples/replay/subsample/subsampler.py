@@ -20,10 +20,9 @@ ds['ftime'] = ds['cftime'].chunk(21755)
 start_timestep = int(sys.argv[1])
 end_timestep = int(sys.argv[2]) + 1
 timestep_total = end_timestep - start_timestep
-timestep_per_loop = 15
+timestep_per_loop = 15 # 1 timestep in this dataset ends up being about 0.65GB
 groups = int(timestep_total/timestep_per_loop)
 splits = [int(x) for x in np.linspace(start_timestep, end_timestep, groups+1)]
-# 1 timestep in this dataset ends up being about 0.65GB
 
 for i in range(len(splits) - 1):
 
