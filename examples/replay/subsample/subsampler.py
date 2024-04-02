@@ -10,7 +10,7 @@ ds = xr.open_zarr("gcs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree/03h-freq/zar
 start_timestep = int(sys.argv[1])
 end_timestep = int(sys.argv[2]) + 1
 timestep_total = end_timestep - start_timestep
-timestep_per_loop = 19
+timestep_per_loop = 15
 groups = int(timestep_total/timestep_per_loop)
 splits = [int(x) for x in np.linspace(start_timestep, end_timestep, groups+1)]
 
