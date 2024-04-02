@@ -29,6 +29,9 @@ for i in range(len(splits) - 1):
                                  "grid_yt":-1, 
                                  "grid_xt":-1})
     
+    ds_subset['ftime'].load()
+    ds_subset['cftime'].load()
+    
     region = {
         "time": slice(start_time, end_time),
         "pfull": slice(None, None),
