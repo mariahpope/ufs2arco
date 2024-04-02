@@ -4,23 +4,25 @@ import dask.array as darray
 
 path_out = "gcs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree-subsampled/03h-freq/zarr/"
 
-#### STORE CONTAINER
+# open and subsample
 ds = xr.open_zarr("gcs://noaa-ufs-gefsv13replay/ufs-hr1/0.25-degree/03h-freq/zarr/fv3.zarr",
                 storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"},)
 
 ds = ds.isel(grid_xt=slice(None, None, 4), 
              grid_yt=slice(None, None, 4))
 
-# update chunks to match 1-deg ds (dont need pfull to be 1)
+# update chunks to match 1-deg ds (pfull needs to be 127)
 ds = ds.chunk({"time":1, 
                "pfull":127, 
                "grid_yt":-1, 
-               "grid_xt":-1})
+               "grid_xt":-1}
+               )
 
-ds = ds.drop(['cftime','ftime']) # test just dropping these
-#ds['cftime'] = ds['cftime'].chunk(21755)
-#ds['ftime'] = ds['ftime'].chunk(21755)
+# load in so it doesnt cause weird things to happen when we write out
+ds['cftime'].load()
+ds['ftime'].load()
 
+# start building container
 dds = xr.Dataset()
 for key, da in ds.data_vars.items():
     print(key)
@@ -42,6 +44,3 @@ dds.to_zarr(path_out,
             compute=False,
             mode='w',
             storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"})
-del dds
-del dda
-print('container done')
