@@ -34,7 +34,7 @@ def submit_slurm_mover(job_id, mover):
         f"#SBATCH --cpus-per-task=30\n"+\
         f"#SBATCH --partition=compute\n"+\
         f"#SBATCH -t 120:00:00\n\n"+\
-        f"source /contrib/Tim.Smith/miniconda3/etc/profile.d/conda.sh\n"+\
+        f"source /contrib/Mariah.Pope/miniconda3/etc/profile.d/conda.sh\n"+\
         f"conda activate ufs2arco\n"+\
         f'python -c "{the_code}"'
 
@@ -61,8 +61,8 @@ if __name__ == "__main__":
     mover = ReplayMover1Degree(
         n_jobs=15,
         config_filename="config-1.00-degree.yaml",
-        storage_options={"token": "/contrib/Tim.Smith/.gcs/replay-service-account.json"},
-        main_cache_path="/lustre/Tim.Smith/tmp-replay/1.00-degree",
+        storage_options={"token": "/contrib/Mariah.Pope/.gcs/replay-service-account.json"},
+        main_cache_path="/lustre/Mariah.Pope/tmp-replay/1.00-degree",
         component="fv3",
     )
 

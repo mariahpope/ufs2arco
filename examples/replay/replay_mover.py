@@ -100,7 +100,7 @@ class ReplayMover1Degree():
         config_filename,
         component="fv3",
         storage_options=None,
-        main_cache_path=f"/contrib/Tim.Smith/tmp-replay/1.00-degree",
+        main_cache_path=f"/contrib/Mariah.Pope/tmp-replay/1.00-degree",
     ):
         self.n_jobs = n_jobs
         self.config_filename = config_filename
@@ -468,7 +468,7 @@ class ReplayMoverQuarterDegree(ReplayMover1Degree):
         config_filename,
         component="fv3",
         storage_options=None,
-        main_cache_path=f"/contrib/Tim.Smith/tmp-replay/0.25-degree",
+        main_cache_path=f"/contrib/Mariah.Pope/tmp-replay/0.25-degree",
     ):
         super().__init__(
             n_jobs=n_jobs,
