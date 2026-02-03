@@ -385,7 +385,6 @@ class Driver:
 
 # some utilities for handling missing data
 def _get_time(d):
-    print(f"d ==== {d}")
     return d.get("t0", d.get("time", None))
 
 def _convert_types_to_yaml(d):
