@@ -866,3 +866,76 @@ def _merge_attrs(list_of_dicts):
 
     merged_dict["variables_metadata"] = {key: vmetadata[key] for key in merged_dict["variables"]}
     return merged_dict
+
+
+class Anemoi_Inference_With_Forcings(Anemoi):
+    """
+    Augmented "anemoi" target to be used for creating datasets for inference. 
+    THis facilitiates everything the anemoi target does, 
+    but only loads initial conditions, and then calculates forcings for the entire requested forecast.
+    """
+    def is_initial_conditions(self, dims: dict) -> bool:
+        """
+        Determine if timestep is initial conditions or not.
+        If not, we will not pull all data and simply create a dataset structure to later compute forcings.
+        """
+        # initial conditions will be t0 in yaml
+        # return true if we are processing initial conditions
+        is_t0 = (dims.get("t0") == self.source.t0[0])
+        return is_t0
+    
+    def save_ds_structure(self, ds):
+        """
+        Utility to save structure of our ds.
+        We do this to have coords (time/lat/lon/etc.) readily available later for computing forcings.
+        """
+        coords = {c: ds.coords[c].copy(deep=True) for c in ds.coords}
+        
+        # copy all variables in dataset but then fill with nans
+        data_vars = {}
+        for v, da in ds.data_vars.items():
+            shape = tuple(ds.sizes[d] for d in da.dims)
+            fill = np.nan if np.issubdtype(da.dtype, np.floating) else 0
+            data = np.full(shape, fill, dtype=da.dtype)
+
+            data_vars[v] = xr.DataArray(
+                data,
+                dims=da.dims,
+                attrs=dict(da.attrs),
+            )
+
+        self.ds_structure = xr.Dataset(
+            coords=coords, data_vars=data_vars, attrs=dict(ds.attrs)
+        )
+
+    def apply_transforms_to_sample(
+        self,
+        xds: xr.Dataset,
+    ) -> xr.Dataset:
+        """
+        Slightly augmented version of apply_transform function to work better with this inference class.
+        """
+        if self._has_fhr:
+            xds["valid_time"] = xds.coords["t0"] + xds.coords["lead_time"].compute()
+            xds = xds.squeeze("fhr", drop=True)
+            xds = xds.swap_dims({"t0": "valid_time"})
+            if "t0" in xds.coords:
+                xds = xds.drop_vars("t0")
+
+        if not self._has_member:
+            xds = xds.expand_dims({"ensemble": self.ensemble})
+
+        xds = self.compute_forcings(xds)
+        xds = self.rename_dataset(xds)
+        xds = self._map_datetime_to_index(xds)
+        xds = self._map_levels_to_suffixes(xds)
+        xds = self._map_static_to_expanded(xds)
+        xds = xds.transpose(*(("time", "ensemble") + tuple(xds.attrs["stack_order"])))
+        xds = self._stackit(xds)
+        xds = self._calc_sample_stats(xds)
+        if self.do_flatten_grid:
+            xds = self._flatten_grid(xds)
+        xds = xds.transpose(*self.dim_order)
+        xds = xds.reset_coords()
+        xds = xds[sorted(xds.data_vars)]
+        return xds
