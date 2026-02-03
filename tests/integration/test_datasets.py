@@ -221,12 +221,12 @@ def test_flattened_base_equals_anemoi(source):
 
 @pytest.mark.dependency(
     depends=[
-        f"test_this_combo[{source}-{target}]"
+        f"test_this_combo_nrt[{source}-{target}]"
         for source in _nrt_sources
         for target in _nrt_targets
     ]
 )
-@pytest.mark.parametrize("source", _sources)
+@pytest.mark.parametrize("source", _nrt_sources)
 def test_forcings_logic_anemoi_inference(source):
     ds = xr.open_zarr(
         os.path.join(_local_path, source, "anemoi_inference_with_forcings", "dataset.zarr"), decode_timedelta=True
