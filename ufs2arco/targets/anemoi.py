@@ -874,15 +874,56 @@ class Anemoi_Inference_With_Forcings(Anemoi):
     THis facilitiates everything the anemoi target does, 
     but only loads initial conditions, and then calculates forcings for the entire requested forecast.
     """
-    def is_initial_conditions(self, dims: dict) -> bool:
+    
+    def __init__(
+        self,
+        source: Source,
+        chunks: dict,
+        store_path: str,
+        rename: Optional[dict] = None,
+        forcings: Optional[tuple | list] = None,
+        statistics_period: Optional[dict] = None,
+        compute_temporal_residual_statistics: Optional[bool] = False,
+        sort_channels_by_levels: Optional[bool] = False,
+        variables_with_nans: Optional[list] = None,
+        save_additional_step: Optional[bool] = False,
+    ) -> None:
+
+        super().__init__(
+            source=source,
+            chunks=chunks,
+            store_path=store_path,
+            rename=rename,
+            forcings=forcings,
+            statistics_period=statistics_period,
+            compute_temporal_residual_statistics=compute_temporal_residual_statistics,
+            sort_channels_by_levels=sort_channels_by_levels,
+            variables_with_nans=variables_with_nans,
+        )
+
+        self.save_additional_step = save_additional_step
+
+    def load_data_flag(self, dims: dict) -> bool:
         """
         Determine if timestep is initial conditions or not.
         If not, we will not pull all data and simply create a dataset structure to later compute forcings.
         """
-        # initial conditions will be t0 in yaml
-        # return true if we are processing initial conditions
-        is_t0 = (dims.get("t0") == self.source.t0[0])
-        return is_t0
+        t0_val = dims.get("t0")
+        
+        # depending on how you trained your model you may need to load in a timestep prior to initialization
+        # this helps facilitate that as an option
+        if self.save_additional_step:
+            from datetime import timedelta
+            load_data = (
+                t0_val == self.source.t0[0]
+                or t0_val == self.source.t0[0] + timedelta(hours=6)
+            )
+            
+        # otherwise, only initial conditions saved out
+        else:
+            load_data = t0_val == self.source.t0[0]
+        
+        return load_data
     
     def save_ds_structure(self, ds):
         """
