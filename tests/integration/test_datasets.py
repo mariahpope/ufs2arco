@@ -104,9 +104,7 @@ def run_test(source, target):
     logger.info(last_line)
 
     # now run the tests
-    # we do not run for anemoi_inference.. we will run extra tests on that later
-    if target in ("anemoi", "base"):
-        _test_static_vars(source, target, config["directories"]["zarr"])
+    _test_static_vars(source, target, config["directories"]["zarr"])
 
     logger.info(f" ... Test Passed")
 
@@ -131,7 +129,7 @@ def _test_static_vars(source, target, store):
 
     # test land sea mask
     for varname in [lsm, orog]:
-        if target == "anemoi":
+        if target in ("anemoi", "anemoi_inference_with_forcings"):
             idx = ds.attrs["variables"].index(varname)
             xda = ds["data"].sel(variable=idx)
         else:
@@ -174,12 +172,6 @@ def setup_logging():
 def test_this_combo(source, target):
     run_test(source, target)
 
-@pytest.mark.dependency()
-@pytest.mark.parametrize("target", _nrt_targets)
-@pytest.mark.parametrize("source", _nrt_sources)
-def test_this_combo_nrt(source, target):
-    run_test(source, target)
-
 @pytest.mark.dependency(
     depends=[
         f"test_this_combo[{source}-{target}]"
@@ -218,6 +210,12 @@ def test_flattened_base_equals_anemoi(source):
                         xda.squeeze().values.flatten(),
                         ads["data"].sel(variable=idx, time=itime, ensemble=imember).squeeze().values.flatten(),
                     )
+                    
+@pytest.mark.dependency()
+@pytest.mark.parametrize("target", _nrt_targets)
+@pytest.mark.parametrize("source", _nrt_sources)
+def test_this_combo_nrt(source, target):
+    run_test(source, target)
 
 @pytest.mark.dependency(
     depends=[
