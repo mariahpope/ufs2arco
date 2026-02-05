@@ -932,22 +932,24 @@ class Anemoi_Inference_With_Forcings(Anemoi):
         """
         coords = {c: ds.coords[c].copy(deep=True) for c in ds.coords}
         
-        # copy all variables in dataset but then fill with nans
+        # keep static vars, as they don't change over time
+        keep_vars = {"lsm", "orog"}
+
         data_vars = {}
         for v, da in ds.data_vars.items():
-            shape = tuple(ds.sizes[d] for d in da.dims)
-            fill = np.nan if np.issubdtype(da.dtype, np.floating) else 0
-            data = np.full(shape, fill, dtype=da.dtype)
+            if v in keep_vars:
+                out = da.copy(deep=True)
+            else:
+                # for the rest, create float NaN-filled array with same structure
+                shape = tuple(ds.sizes[d] for d in da.dims)
+                data = np.full(shape, np.nan, dtype=float)
+                out = xr.DataArray(data, dims=da.dims, attrs=dict(da.attrs))
 
-            data_vars[v] = xr.DataArray(
-                data,
-                dims=da.dims,
-                attrs=dict(da.attrs),
+            data_vars[v] = out
+
+            self.ds_structure = xr.Dataset(
+                coords=coords, data_vars=data_vars, attrs=dict(ds.attrs)
             )
-
-        self.ds_structure = xr.Dataset(
-            coords=coords, data_vars=data_vars, attrs=dict(ds.attrs)
-        )
 
     def apply_transforms_to_sample(
         self,
@@ -980,3 +982,7 @@ class Anemoi_Inference_With_Forcings(Anemoi):
         xds = xds.reset_coords()
         xds = xds[sorted(xds.data_vars)]
         return xds
+    
+    def reconcile_missing_and_nans(self) -> None:
+        logger.info(f"{self.name}.reconcile_missing_and_nans: Will not run... we expect nans after initial conditinos")
+        # todo - add logic to just check initial conditions and forcings

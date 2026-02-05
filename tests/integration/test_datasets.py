@@ -234,7 +234,7 @@ def test_forcings_logic_anemoi_inference(source):
     
     # test that there are no nans in forcings for whole length of dataset
     # don't need to test them all
-    forcings_to_test = ["cos_latitude","sin_latitude",]
+    forcings_to_test = ["cos_latitude","sin_latitude","lsm"]
     for varname in forcings_to_test:
         idx = ds.attrs["variables"].index(varname)
         xda = ds["data"].sel(variable=idx)
@@ -242,9 +242,8 @@ def test_forcings_logic_anemoi_inference(source):
         assert not xda.isnull().any(), "NaNs found in forcings"
         
     # SHOULD be nans after inital conditions for prognostics
-    # t2m is almost certainly always going to be in our datasets
-    # additionally test lsm and orog
-    variables_to_test = ["t2m", "lsm", "orog"]
+    # t2m is almost certainly always going to be in our datasets?
+    variables_to_test = ["t2m"]
     for varname in variables_to_test:
         idx = ds.attrs["variables"].index(varname)
         xda_ic = ds["data"].sel(variable=idx, time=0)
