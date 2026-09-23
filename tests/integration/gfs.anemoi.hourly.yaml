@@ -1,0 +1,39 @@
+mover:
+  name: datamover
+  batch_size: 2
+
+directories:
+  zarr: dataset.zarr
+  cache: cache
+  logs: logs
+
+source:
+  name: gfs_archive
+  t0:
+    start: 2023-08-02T00
+    end: 2023-08-02T06
+    freq: 6h
+  fhr:
+    start: 0
+    end: 5
+    step: 1
+  variables:
+    - lsm
+    - orog
+    - t2m
+    - t
+  levels:
+    - 500
+  slices:
+    sel:
+      latitude: [10, -10]
+      longitude: [0, 20]
+
+target:
+  name: anemoi
+  forcings: []
+  chunks:
+    time: 1
+    variable: -1
+    ensemble: 1
+    cell: -1

@@ -13,8 +13,8 @@ class GFSArchive(NOAAGribForecastData, Source):
     """
     Access 1/4 degree archives of NOAA's Global Forecast System (GFS) via:
         * if before 2021: UCAR Research Data Archive (RDA)
-            * https://rda.ucar.edu/datasets/d084001
-            * https://rda.ucar.edu/datasets/d084003
+            * https://gdex.ucar.edu/datasets/d084001/
+            * https://gdex.ucar.edu/datasets/d084003/
         * after 2021: AWS at https://registry.opendata.aws/noaa-gfs-bdp-pds/
     """
 
@@ -22,6 +22,7 @@ class GFSArchive(NOAAGribForecastData, Source):
     horizontal_dims = ("latitude", "longitude")
     file_suffixes = ("", "b")
     static_vars = ("lsm", "orog")
+    hourly_forecast_start = pd.Timestamp("2021-02-26T00")
 
     @property
     def available_levels(self) -> tuple:
@@ -56,7 +57,9 @@ class GFSArchive(NOAAGribForecastData, Source):
         """
         Args:
             t0 (dict): Dictionary with start and end times for initial conditions, and e.g. "freq=6h". All options get passed to ``pandas.date_range``.
-            fhr (dict): Dictionary with 'start', 'end', and 'step' forecast hours.
+            fhr (dict): Dictionary with 'start', 'end', and 'step' forecast
+                hours. The archive supports 3-hourly forecast hours before
+                2021-02-26 and hourly forecast hours from that date onward.
             variables (list, tuple, optional): variables to grab
             levels (list, tuple, optional): vertical levels to grab
             use_nearest_levels (bool, optional): if True, all level selection with
@@ -69,6 +72,17 @@ class GFSArchive(NOAAGribForecastData, Source):
         """
         self.t0 = pd.date_range(**t0)
         self.fhr = np.arange(fhr["start"], fhr["end"] + 1, fhr["step"])
+
+        # Catch when requested forecast hour is not valid (e.g. due to limits in archive)
+        # First, grab hourly fhrs (whatever is not 3-hours because GFS archive supports 3-hours)
+        hourly_fhr = self.fhr[self.fhr % 3 != 0]
+        # Make sure we are not trying to get hourly data before it exists in archive
+        unavailable_t0 = self.t0[self.t0 < self.hourly_forecast_start]
+        if len(hourly_fhr) > 0 and len(unavailable_t0) > 0:
+            raise ValueError(
+                f"{self.name}: hourly forecast files are only available starting {self.hourly_forecast_start}"
+            )
+
         super().__init__(
             variables=variables,
             levels=levels,
@@ -119,8 +133,8 @@ class GFSArchive(NOAAGribForecastData, Source):
         """
         if t0 < pd.Timestamp("2021-01-01T00"):
 
-            bucket = f"https://data.rda.ucar.edu/d084001" if file_suffix == "" else \
-                    f"https://data.rda.ucar.edu/d084003"
+            dataset = "d084001" if file_suffix == "" else "d084003"
+            bucket = f"https://osdf-director.osg-htc.org/ncar/gdex/{dataset}"
             outer = f"{t0.year:04d}/{t0.year:04d}{t0.month:02d}{t0.day:02d}"
             fname = f"gfs.0p25{file_suffix}.{t0.year:04d}{t0.month:02d}{t0.day:02d}{t0.hour:02d}.f{fhr:03d}.grib2"
 
