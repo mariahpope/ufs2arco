@@ -130,7 +130,8 @@ def _test_static_vars(source, target, store):
 
     # test land sea mask
     for varname in [lsm, orog]:
-        if target in ("anemoi", "anemoi_inference_with_forcings"):
+        # include all anemoi targets
+        if target.startswith("anemoi"):
             idx = ds.attrs["variables"].index(varname)
             xda = ds["data"].sel(variable=idx)
         else:
