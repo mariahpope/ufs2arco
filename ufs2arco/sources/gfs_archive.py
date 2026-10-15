@@ -9,6 +9,8 @@ from ufs2arco.sources import Source, NOAAGribForecastData
 
 logger = logging.getLogger("ufs2arco")
 
+print("hello!")
+
 class GFSArchive(NOAAGribForecastData, Source):
     """
     Access 1/4 degree archives of NOAA's Global Forecast System (GFS) via:
