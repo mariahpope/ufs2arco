@@ -3,7 +3,7 @@ import pandas as pd
 import xarray as xr
 
 import ufs2arco.sources.cloud_zarr as cmod
-from ufs2arco.sources.gcs_era5_1degree import GCSERA5OneDegree
+from ufs2arco.sources.gcs_era5 import GCSERA5
 
 
 def _fake_era5_ds():
@@ -23,7 +23,7 @@ def _fake_era5_ds():
 
 def test_era5_init_and_dynamic_open_sample_dataset(monkeypatch):
     monkeypatch.setattr(cmod.xr, "open_zarr", lambda *args, **kwargs: _fake_era5_ds())
-    source = GCSERA5OneDegree(
+    source = GCSERA5(
         time={"start": "2020-01-01T00", "end": "2020-01-01T06", "freq": "6h"},
         uri="gcs://dummy.zarr",
         variables=["t", "land_sea_mask"],
