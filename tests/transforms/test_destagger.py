@@ -1,4 +1,3 @@
-import logging
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -37,15 +36,13 @@ def test_destagger_applies_to_staggered_variable():
     mock_accessor.destagger.assert_called_once()
 
 
-def test_destagger_skips_when_stag_dim_absent(caplog):
+def test_destagger_skips_when_stag_dim_absent():
     xds = _make_staggered_dataset()
 
-    with caplog.at_level(logging.INFO, logger="ufs2arco"):
-        result = destagger(xds, {"T": "west_east"})
-
-    # T had no staggered dim, so it should be unchanged.
+    # T has no staggered dim, so destagger should leave it unchanged.
+    result = destagger(xds, {"T": "west_east"})
     assert result["T"].dims == ("south_north", "west_east")
-    assert any("could not be applied" in rec.message for rec in caplog.records)
+    xr.testing.assert_identical(result["T"], xds["T"])
 
 
 def test_destagger_drops_unused_stag_dims():
