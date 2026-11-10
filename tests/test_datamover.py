@@ -262,3 +262,33 @@ def test_next_data_inference_uses_saved_structure_after_initial_condition():
     assert len(later) > 0
     assert calls["open_sample_dataset"] == reads_after_ic
     assert later["t0"].values[0] == np.datetime64(source.t0[1])
+
+
+def test_mark_static_variables_sets_constant_attr():
+    class _SourceWithStatic(_BaseSource):
+        static_vars = ("lsm",)
+
+    mover = DataMover(_SourceWithStatic(), _BaseTarget(), batch_size=1, cache_dir=".")
+    xds = xr.Dataset({"lsm": ("x", [1.0, 2.0])}, coords={"x": [0, 1]})
+    mover._mark_static_variables(xds)
+    assert xds["lsm"].attrs.get("constant_in_time") is True
+
+
+def test_mark_static_variables_noop_when_target_disabled():
+    class _TargetNoStatic(_BaseTarget):
+        always_open_static_vars = False
+
+    mover = DataMover(_BaseSource(), _TargetNoStatic(), batch_size=1, cache_dir=".")
+    xds = xr.Dataset({"lsm": ("x", [1.0])}, coords={"x": [0]})
+    mover._mark_static_variables(xds)
+    assert "constant_in_time" not in xds["lsm"].attrs
+
+
+def test_mpi_datamover_str_contains_summary(monkeypatch):
+    monkeypatch.setattr(dmod, "_has_mpi", True)
+    topo = type("Topo", (), {"size": 4, "rank": 1})()
+    mover = MPIDataMover(source=_SimpleSource(), target=_SimpleTarget(), mpi_topo=topo, cache_dir=".")
+    text = str(mover)
+    assert "Mover: MPIDataMover" in text
+    assert "batch_size" in text
+    assert "Total Samples" in text

@@ -42,3 +42,37 @@ def test_rotate_vectors_sets_grid_relative_flag_to_zero():
     ue, vn = rotate_lambert_conical_vectors(u, v)
     assert ue.attrs["GRIB_uvRelativeToGrid"] == 0
     assert vn.attrs["GRIB_uvRelativeToGrid"] == 0
+
+
+def test_rotate_vectors_wrapper_processes_pairs():
+    from ufs2arco.transforms.rotate_vectors import rotate_vectors
+
+    u = xr.DataArray(
+        np.ones((2, 2)), dims=("y", "x"),
+        coords={"longitude": ("x", [0.0, 1.0])}, name="u", attrs=_attrs(),
+    )
+    v = xr.DataArray(
+        np.ones((2, 2)), dims=("y", "x"),
+        coords={"longitude": ("x", [0.0, 1.0])}, name="v", attrs=_attrs(),
+    )
+    xds = xr.Dataset({"u": u, "v": v})
+    out = rotate_vectors(xds, vector_pairs=[["u", "v"]])
+    assert out["u"].attrs["GRIB_uvRelativeToGrid"] == 0
+    assert out["v"].attrs["GRIB_uvRelativeToGrid"] == 0
+
+
+def test_rotate_vectors_differing_latins_uses_log_branch():
+    attrs = _attrs()
+    attrs["GRIB_Latin1InDegrees"] = 25.0
+    attrs["GRIB_Latin2InDegrees"] = 40.0  # differs from Latin1 -> log-based angle
+    u = xr.DataArray(
+        np.ones((2, 2)), dims=("y", "x"),
+        coords={"longitude": ("x", [0.0, 1.0])}, name="u", attrs=attrs,
+    )
+    v = xr.DataArray(
+        np.ones((2, 2)), dims=("y", "x"),
+        coords={"longitude": ("x", [0.0, 1.0])}, name="v", attrs=attrs,
+    )
+    ue, vn = rotate_lambert_conical_vectors(u, v)
+    assert np.isfinite(ue.values).all()
+    assert np.isfinite(vn.values).all()

@@ -46,3 +46,22 @@ def test_vertical_regrid_raises_if_interfaces_not_found_without_nearest():
             interfaces=[999, 1000],
             use_nearest_interfaces=False,
         )
+
+
+def test_vertical_regrid_use_nearest_interfaces_branch():
+    xds = xr.Dataset(
+        {
+            "delz": (("level",), [1.0, 1.0]),
+            "temp": (("level",), [10.0, 20.0]),
+        },
+        coords={"level": [100, 200], "interface": [50, 150, 250]},
+    )
+    out = fv_vertical_regrid(
+        xds=xds,
+        weight_var="delz",
+        interfaces=[49, 151, 249],  # not exact -> needs nearest
+        use_nearest_interfaces=True,
+    )
+    assert "temp" in out
+    assert "level" in out.dims
+

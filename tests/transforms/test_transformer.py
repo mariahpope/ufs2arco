@@ -33,3 +33,64 @@ def test_transformer_applies_multiply_divide_and_mapping():
     assert "t2m" not in result
     assert "round_t2m" in result
     assert result["round_t2m"].values.tolist() == [5.0, 6.0]
+
+
+def test_transformer_str_contains_options():
+    tr = Transformer(options={"multiply": {"t2m": 2}})
+    text = str(tr)
+    assert "Transformations" in text
+    assert "multiply" in text
+
+
+def test_transformer_dispatches_destagger():
+    import numpy as np
+
+    tr = Transformer(options={"destagger": {"T": "west_east"}})
+    xds = xr.Dataset(
+        {"T": (("south_north", "west_east"), np.ones((2, 2)))},
+    )
+    out = tr(xds)
+    # T has no staggered dim, so it passes through unchanged
+    assert "T" in out
+
+
+def test_transformer_dispatches_rotate_vectors():
+    import numpy as np
+
+    attrs = {
+        "GRIB_gridType": "lambert",
+        "GRIB_uvRelativeToGrid": 1,
+        "GRIB_latitudeOfFirstGridPointInDegrees": 25.0,
+        "GRIB_longitudeOfFirstGridPointInDegrees": 260.0,
+        "GRIB_Latin1InDegrees": 25.0,
+        "GRIB_Latin2InDegrees": 25.0,
+        "GRIB_LoVInDegrees": 262.5,
+    }
+    u = xr.DataArray(np.ones((2, 2)), dims=("y", "x"), coords={"longitude": ("x", [0.0, 1.0])}, name="u", attrs=attrs)
+    v = xr.DataArray(np.ones((2, 2)), dims=("y", "x"), coords={"longitude": ("x", [0.0, 1.0])}, name="v", attrs=attrs)
+    xds = xr.Dataset({"u": u, "v": v})
+    tr = Transformer(options={"rotate_vectors": {"vector_pairs": [["u", "v"]]}})
+    out = tr(xds)
+    assert out["u"].attrs["GRIB_uvRelativeToGrid"] == 0
+
+
+def test_transformer_dispatches_fv_vertical_regrid():
+    import numpy as np
+
+    xds = xr.Dataset(
+        {
+            "delz": (("level",), [1.0, 1.0]),
+            "temp": (("level",), [10.0, 20.0]),
+        },
+        coords={"level": [100, 200]},
+    )
+    tr = Transformer(
+        options={
+            "fv_vertical_regrid": {
+                "weight_var": "delz",
+                "interfaces": [50, 150, 250],
+            }
+        }
+    )
+    out = tr(xds)
+    assert "temp" in out
