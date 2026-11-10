@@ -12,7 +12,7 @@ mover:
   batch_size: 1
 
 directories:
-  zarr: conus404_anemoi.zarr
+  zarr: dataset.zarr
   cache: cache
   logs: logs
 
